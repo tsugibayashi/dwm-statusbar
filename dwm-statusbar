@@ -32,11 +32,11 @@ function display_audacious_status () {
 
 # function func_xsetroot {{{
 function func_xsetroot () {
-    local date_type=$1
+    local date_format=$1
     local output_type=$2
     local check_output_type
 
-    case $date_type in
+    case $date_format in
         hm)
             local date=$( date +"%F %R" )
         ;;
@@ -77,13 +77,13 @@ function func_xsetroot () {
         c_b_d)
             xsetroot -name "$cpu_temp"'| '"$battery"'| '"$date"
         ;;
-        # audacious, cpu temp., and date
-        a_c_d)
-            xsetroot -name "$audacious_status"'| '"$cpu_temp"'| '"$date"
-        ;;
         # audacious and date
         a_d)
             xsetroot -name "$audacious_status"'| '"$date"
+        ;;
+        # audacious, cpu temp., and date
+        a_c_d)
+            xsetroot -name "$audacious_status"'| '"$cpu_temp"'| '"$date"
         ;;
         # audacious, battery, and date
         a_b_d)
@@ -94,7 +94,19 @@ function func_xsetroot () {
 # }}}
 
 ### main routine
-#func_xsetroot hm b_d
-func_xsetroot hms b_d
-#func_xsetroot hms a_b_d
+if [ ! $1 ]; then
+    echo '[Error] input $1, date format'
+    echo '        ex. hm or hms'
+    exit 1
+fi
+DATE_FORMAT=$1
+
+if [ ! $2 ]; then
+    echo '[Error] input $2, output type'
+    echo '        ex. b_d, c_b_d, a_b_d'
+    exit 1
+fi
+OUTPUT_TYPE=$2
+
+func_xsetroot $DATE_FORMAT $OUTPUT_TYPE
 
