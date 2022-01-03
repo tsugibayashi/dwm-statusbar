@@ -1,0 +1,100 @@
+#!/bin/bash
+
+### functions
+# function display_battery_percentage {{{
+function display_battery_percentage () {
+    local battery_bat=`upower -e | grep battery`
+    local battery_percentage=`upower -i $battery_bat | grep percentage | gawk '{print($2)}'`
+    echo $battery_percentage
+}
+# }}}
+
+# function display_cpu_temperature {{{
+function display_cpu_temperature () {
+    local temp_cpu0=`cat /sys/class/thermal/thermal_zone0/temp | cut -c1-2 | sed -e 's/$/°C/'`
+    local temp_cpu1=`cat /sys/class/thermal/thermal_zone1/temp | cut -c1-2 | sed -e 's/$/°C/'`
+    local temp_cpu2=`cat /sys/class/thermal/thermal_zone2/temp | cut -c1-2 | sed -e 's/$/°C/'`
+    echo $temp_cpu0'/'$temp_cpu1'/'$temp_cpu2
+}
+# }}}
+
+# function display_audacious_status {{{
+function display_audacious_status () {
+    local check_audacious=`audtool playback-status | wc -l`
+    if [ ${check_audacious} -ne 0 ]; then
+        local current_song=`audtool --current-song`
+        local current_song_length=`audtool --current-song-length`
+        local current_song_output_length=`audtool --current-song-output-length`
+        echo ${current_song} ${current_song_output_length}/${current_song_length}
+    fi
+}
+# }}}
+
+# function func_xsetroot {{{
+function func_xsetroot () {
+    local date_type=$1
+    local output_type=$2
+    local check_output_type
+
+    case $date_type in
+        hm)
+            local date=$( date +"%F %R" )
+        ;;
+        hms)
+            local date=$( date +"%F %T" )
+        ;;
+    esac
+
+    check_output_type=`echo $output_type | grep b | wc -l`
+    if [ $check_output_type -eq 1 ]; then
+        local battery=`display_battery_percentage`
+    fi
+
+    check_output_type=`echo $output_type | grep c | wc -l`
+    if [ $check_output_type -eq 1 ]; then
+        local cpu_temp=`display_cpu_temperature`
+    fi
+
+    check_output_type=`echo $output_type | grep a | wc -l`
+    if [ $check_output_type -eq 1 ]; then
+        local audacious_status=`display_audacious_status`
+    fi
+
+    case $output_type in
+        # date
+        d)
+            xsetroot -name "$date"
+        ;;
+        # battery and date
+        b_d)
+            xsetroot -name "$battery"'| '"$date"
+        ;;
+        # cpu temp. and date
+        c_d)
+            xsetroot -name "$cpu_temp"'| '"$date"
+        ;;
+        # cpu temp., battery, and date
+        c_b_d)
+            xsetroot -name "$cpu_temp"'| '"$battery"'| '"$date"
+        ;;
+        # audacious, cpu temp., and date
+        a_c_d)
+            xsetroot -name "$audacious_status"'| '"$cpu_temp"'| '"$date"
+        ;;
+        # audacious and date
+        a_d)
+            xsetroot -name "$audacious_status"'| '"$date"
+        ;;
+        # audacious, battery, and date
+        a_b_d)
+            xsetroot -name "$audacious_status"'| '"$battery"'| '"$date"
+        ;;
+    esac
+}
+# }}}
+
+### main routine
+#func_xsetroot hm b_d
+func_xsetroot hms b_d
+#func_xsetroot hms a_b_d
+
